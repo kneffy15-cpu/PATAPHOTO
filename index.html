@@ -48,7 +48,7 @@
 
     <div class="header" id="hd">
         <h1>PATA PHOTO</h1>
-        <div style="color:var(--gold); font-size:10px; letter-spacing:4px;">premium photobooth</div>
+        <div style="color:var(--gold); font-size:10px; letter-spacing:4px;">classy photobooth</div>
     </div>
 
     <div class="preview-box" id="pv">
@@ -154,7 +154,7 @@
                     await new Promise(r => setTimeout(r, 1000));
                     timeLeft--;
                 }
-                timerTxt.innerText = "📸";
+                timerTxt.innerText = "chers";
                 if(flashEnabled) {
                     document.getElementById('flash-overlay').classList.add('flash-blink');
                     setTimeout(() => document.getElementById('flash-overlay').classList.remove('flash-blink'), 300);
@@ -221,7 +221,7 @@
             ctx.strokeRect(300, yLogo, 500, 180);
             ctx.fillStyle = "#800000"; ctx.textAlign = "center";
             ctx.font = "italic bold 100px Georgia";
-            ctx.fillText("PataPhoto", 530, yLogo + 110);
+            ctx.fillText("PataPhoto", 500, yLogo + 95);
 
             const now = new Date();
             ctx.fillStyle = "#444";
