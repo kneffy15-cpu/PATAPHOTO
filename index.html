@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PATAPHOTO BOOTH</title>
+    <style>
+        :root { --maroon: #800000; --gold: #c5a059; --bg-app: #0a0a0a; }
+        body { background: var(--bg-app); color: #fff; font-family: 'Times New Roman', serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; }
+        
+        #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; z-index: 9999; }
+        .flash-blink { animation: blink 0.3s ease-out; }
+        @keyframes blink { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+        .header { text-align: center; margin-bottom: 10px; }
+        .header h1 { letter-spacing: 5px; margin: 5px 0; font-size: 24px; color: #fff; }
+        
+        .preview-box { position: relative; width: 320px; height: 400px; border: 2px solid var(--gold); border-radius: 20px; overflow: hidden; background: #000; }
+        #v { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); transition: filter 0.3s ease; }
+        #v.f-retro { filter: scaleX(-1) sepia(0.6) contrast(1.1) brightness(0.9); }
+        #v.f-1860 { filter: scaleX(-1) grayscale(1) contrast(1.3) brightness(0.9); }
+        #v.f-haze { filter: scaleX(-1) contrast(0.8) brightness(1.2) saturate(0.8); }
+
+        #timer { font-size: 100px; font-weight: 900; color: #fff; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; pointer-events: none; text-shadow: 0 0 20px #000; }
+
+        .ui { width: 320px; margin-top: 15px; background: #111; padding: 15px; border-radius: 15px; border: 1px solid #222; box-sizing: border-box; }
+        .label-mini { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: block; font-weight: bold; }
+        
+        .grid-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 5px; margin-bottom: 12px; }
+        .option-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 12px; }
+        .opt-btn { background: #1a1a1a; border: 1px solid #333; color: #777; padding: 10px 2px; font-size: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; transition: 0.2s; text-align: center; }
+        .opt-btn.active { border-color: var(--gold); color: #fff; background: #2c2415; }
+
+        #btn-go { background: #fff; color: #000; border: none; width: 100%; padding: 16px; font-weight: 900; letter-spacing: 2px; border-radius: 12px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        
+        /* Tombol setelah selesai */
+        .post-session { display: none; flex-direction: column; gap: 10px; width: 320px; margin-top: 15px; }
+        .action-btn { padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; border: 2px solid var(--gold); letter-spacing: 1px; }
+        #btn-dl { background: var(--maroon); color: white; }
+        #btn-reset { background: #fff; color: #000; }
+
+        canvas { display: none; margin-top: 20px; max-width: 95%; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 1px solid #444; }
+    </style>
+</head>
+<body>
+
+    <div id="flash-overlay"></div>
+
+    <div class="header" id="hd">
+        <h1>PATA PHOTO</h1>
+        <div style="color:var(--gold); font-size:10px; letter-spacing:4px;">premium photobooth</div>
+    </div>
+
+    <div class="preview-box" id="pv">
+        <video id="v" autoplay playsinline></video>
+        <div id="timer"></div>
+    </div>
+
+    <div class="ui" id="ui-panel">
+        <span class="label-mini"> Flash | Jumlah Foto</span>
+        <div class="grid-top">
+            <button class="opt-btn active" id="flash-btn" onclick="toggleFlash()">FLASH: ON</button>
+            <button class="opt-btn q-btn" onclick="setQty(1, this)">1</button>
+            <button class="opt-btn q-btn" onclick="setQty(2, this)">2</button>
+            <button class="opt-btn q-btn active" onclick="setQty(3, this)">3</button>
+            <button class="opt-btn q-btn" onclick="setQty(4, this)">4</button>
+        </div>
+
+        <span class="label-mini"> Warna Strip (Grid)</span>
+        <div class="option-row" id="grid-opts">
+            <button class="opt-btn active" onclick="setGrid('#FFFFFF', this)">WHITE</button>
+            <button class="opt-btn" onclick="setGrid('#CCCCCC', this)">GREY</button>
+            <button class="opt-btn" onclick="setGrid('#FDFDD0', this)">CREAM</button>
+            <button class="opt-btn" onclick="setGrid('#151515', this)">DARK</button>
+        </div>
+
+        <span class="label-mini"> Filter</span>
+        <div class="option-row" id="filter-opts">
+            <button class="opt-btn active" onclick="setF('none', this)">RAW</button>
+            <button class="opt-btn" onclick="setF('f-retro', this)">RETRO</button>
+            <button class="opt-btn" onclick="setF('f-1860', this)">1860</button>
+            <button class="opt-btn" onclick="setF('f-haze', this)">HAZE</button>
+        </div>
+
+        <button id="btn-go">MULAI SNAP</button>
+    </div>
+
+    <canvas id="c"></canvas>
+
+    <div class="post-session" id="post-ui">
+        <button class="action-btn" id="btn-dl">DOWNLOAD STRIP</button>
+        <button class="action-btn" id="btn-reset" onclick="resetApp()">FOTO LAGI</button>
+    </div>
+
+    <script>
+        const video = document.getElementById('v');
+        const btnGo = document.getElementById('btn-go');
+        const timerTxt = document.getElementById('timer');
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        
+        let shots = [];
+        let activeF = 'none';
+        let gridColor = '#FFFFFF';
+        let layoutQty = 3;
+        let flashEnabled = true;
+
+        navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
+
+        function toggleFlash() {
+            flashEnabled = !flashEnabled;
+            const btn = document.getElementById('flash-btn');
+            btn.innerText = flashEnabled ? "FLASH: ON" : "FLASH: OFF";
+            btn.classList.toggle('active', flashEnabled);
+        }
+
+        function setQty(n, b) {
+            layoutQty = n;
+            document.querySelectorAll('.q-btn').forEach(el => el.classList.remove('active'));
+            b.classList.add('active');
+        }
+
+        function setGrid(color, b) {
+            gridColor = color;
+            document.querySelectorAll('#grid-opts .opt-btn').forEach(el => el.classList.remove('active'));
+            b.classList.add('active');
+        }
+
+        function setF(f, b) {
+            activeF = f; video.className = f;
+            document.querySelectorAll('#filter-opts .opt-btn').forEach(el => el.classList.remove('active'));
+            b.classList.add('active');
+        }
+
+        function resetApp() {
+            shots = [];
+            canvas.style.display = 'none';
+            document.getElementById('post-ui').style.display = 'none';
+            document.getElementById('ui-panel').style.display = 'block';
+            document.getElementById('hd').style.display = 'block';
+            document.getElementById('pv').style.display = 'block';
+        }
+
+        btnGo.onclick = async () => {
+            document.getElementById('ui-panel').style.display = 'none';
+            document.getElementById('hd').style.display = 'none';
+            shots = [];
+            canvas.style.display = 'none';
+
+            for(let i=0; i < layoutQty; i++) {
+                let timeLeft = 5;
+                while(timeLeft > 0) {
+                    timerTxt.innerText = timeLeft;
+                    await new Promise(r => setTimeout(r, 1000));
+                    timeLeft--;
+                }
+                timerTxt.innerText = "📸";
+                if(flashEnabled) {
+                    document.getElementById('flash-overlay').classList.add('flash-blink');
+                    setTimeout(() => document.getElementById('flash-overlay').classList.remove('flash-blink'), 300);
+                }
+                captureOne();
+                await new Promise(r => setTimeout(r, 600));
+                timerTxt.innerText = "";
+            }
+            renderFinal();
+        };
+
+        function captureOne() {
+            const t = document.createElement('canvas');
+            t.width = 1000; t.height = 1200;
+            const tc = t.getContext('2d');
+            const fStyle = { 
+                'none':'none', 
+                'f-retro':'sepia(0.6) contrast(1.1) brightness(0.9)', 
+                'f-1860':'grayscale(1) contrast(1.3) brightness(0.9)',
+                'f-haze':'contrast(0.8) brightness(1.2) saturate(0.8)'
+            };
+            tc.filter = fStyle[activeF];
+            tc.translate(1000, 0); tc.scale(-1, 1);
+            tc.drawImage(video, 0, 0, 1000, 1200);
+            shots.push(t.toDataURL('image/jpeg', 0.9));
+        }
+
+        async function renderFinal() {
+            document.getElementById('pv').style.display = 'none';
+            const pH = 1280; const fH = 650;
+            canvas.width = 1100;
+            canvas.height = (layoutQty * pH) + fH;
+            
+            ctx.fillStyle = gridColor; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "rgba(128, 0, 0, 0.2)";
+            ctx.lineWidth = 4;
+            ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+
+            for(let i=0; i < layoutQty; i++) {
+                const img = await new Promise(res => {
+                    const m = new Image(); m.onload = () => res(m); m.src = shots[i];
+                });
+                const x = 100, y = 100 + (i * pH);
+                const w = 900, h = 1100;
+
+                ctx.fillStyle = "#800000"; 
+                const p = 35;
+                ctx.fillRect(x - p, y - p, w + (p*2), h + (p*2));
+
+                ctx.fillStyle = gridColor;
+                for(let d = x - p; d <= x + w + p; d += 50) {
+                    ctx.beginPath(); ctx.arc(d, y - p, 18, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(d, y + h + p, 18, 0, Math.PI*2); ctx.fill();
+                }
+                for(let d = y - p; d <= y + h + p; d += 50) {
+                    ctx.beginPath(); ctx.arc(x - p, d, 18, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(x + w + p, d, 18, 0, Math.PI*2); ctx.fill();
+                }
+                ctx.drawImage(img, x, y, w, h);
+            }
+
+            const yLogo = (layoutQty * pH) + 80;
+            ctx.strokeStyle = "#800000"; ctx.lineWidth = 6;
+            ctx.strokeRect(300, yLogo, 500, 180);
+            ctx.fillStyle = "#800000"; ctx.textAlign = "center";
+            ctx.font = "italic bold 100px Georgia";
+            ctx.fillText("Potta Photo", 550, yLogo + 120);
+
+            const now = new Date();
+            ctx.fillStyle = "#444";
+            ctx.font = "bold 25px Courier New";
+            ctx.fillText(now.toLocaleDateString('id-ID') + " // SESSION ID: " + Math.random().toString(36).substr(2, 5).toUpperCase(), 550, yLogo + 250);
+
+            // Barcode
+            ctx.fillStyle = "#000";
+            for(let j=0; j<20; j++) { ctx.fillRect(150 + (j*15), canvas.height - 100, Math.random()*10+2, 40); }
+
+            canvas.style.display = 'block';
+            document.getElementById('post-ui').style.display = 'flex';
+            document.getElementById('btn-dl').onclick = () => {
+                const a = document.createElement('a');
+                a.download = 'POTTAPHOTO.png'; a.href = canvas.toDataURL(); a.click();
+            };
+        }
+    </script>
+</body>
+</html>
