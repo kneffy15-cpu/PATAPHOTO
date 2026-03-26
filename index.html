@@ -88,7 +88,7 @@
     <canvas id="c"></canvas>
 
     <div class="post-session" id="post-ui">
-        <button class="action-btn" id="btn-dl">DOWNLOAD STRIP</button>
+        <button class="action-btn" id="btn-dl">DOWNLOAD GRID</button>
         <button class="action-btn" id="btn-reset" onclick="resetApp()">FOTO LAGI</button>
     </div>
 
@@ -218,10 +218,10 @@
 
             const yLogo = (layoutQty * pH) + 80;
             ctx.strokeStyle = "#800000"; ctx.lineWidth = 6;
-            ctx.strokeRect(300, yLogo, 500, 180);
+            ctx.strokeRect(300, yLogo, 550, 180);
             ctx.fillStyle = "#800000"; ctx.textAlign = "center";
             ctx.font = "italic bold 100px Georgia";
-            ctx.fillText("PataPhoto", 500, yLogo + 70);
+            ctx.fillText("PataPhoto", 400, yLogo + 70);
 
             const now = new Date();
             ctx.fillStyle = "#444";
